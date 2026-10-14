@@ -522,6 +522,158 @@ function parseJSON(s){
 async function withRetry(fn, n=1){ let e; for(let i=0;i<=n;i++){ try { return await fn(); } catch(err){ e=err; } } throw e; }
 
 /* ------------------------------------------------------------------ */
+/*  DOCX export — builds a real Office Open XML .docx in-browser       */
+/*  No external package required. It reads the live resume DOM, so     */
+/*  manual text edits are included in the exported Word document.      */
+/* ------------------------------------------------------------------ */
+const _crcTable = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+function crc32(bytes){
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = _crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function u16(n){ return new Uint8Array([n & 255, (n >>> 8) & 255]); }
+function u32(n){ return new Uint8Array([n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]); }
+function bytesConcat(parts){
+  const total = parts.reduce((n, p) => n + p.length, 0);
+  const out = new Uint8Array(total); let off = 0;
+  parts.forEach(p => { out.set(p, off); off += p.length; });
+  return out;
+}
+function dosDateTime(d = new Date()){
+  const year = Math.max(1980, d.getFullYear());
+  const time = ((d.getHours() & 31) << 11) | ((d.getMinutes() & 63) << 5) | ((Math.floor(d.getSeconds()/2)) & 31);
+  const date = (((year - 1980) & 127) << 9) | (((d.getMonth()+1) & 15) << 5) | (d.getDate() & 31);
+  return { time, date };
+}
+function makeZipStore(files){
+  const enc = new TextEncoder();
+  const localParts = [], centralParts = [];
+  let offset = 0;
+  const dt = dosDateTime();
+  Object.entries(files).forEach(([name, content]) => {
+    const nameB = enc.encode(name);
+    const dataB = content instanceof Uint8Array ? content : enc.encode(content);
+    const crc = crc32(dataB);
+    const local = bytesConcat([
+      u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(dt.time), u16(dt.date),
+      u32(crc), u32(dataB.length), u32(dataB.length), u16(nameB.length), u16(0), nameB, dataB
+    ]);
+    localParts.push(local);
+    const central = bytesConcat([
+      u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(dt.time), u16(dt.date),
+      u32(crc), u32(dataB.length), u32(dataB.length), u16(nameB.length), u16(0), u16(0),
+      u16(0), u16(0), u32(0), u32(offset), nameB
+    ]);
+    centralParts.push(central);
+    offset += local.length;
+  });
+  const localAll = bytesConcat(localParts);
+  const centralAll = bytesConcat(centralParts);
+  const end = bytesConcat([
+    u32(0x06054b50), u16(0), u16(0), u16(centralParts.length), u16(centralParts.length),
+    u32(centralAll.length), u32(localAll.length), u16(0)
+  ]);
+  return new Blob([localAll, centralAll, end], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+function xmlEscape(s){
+  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+}
+function buildResumeDOCX(sheetEl){
+  if (!sheetEl) throw new Error("Resume preview is not available.");
+  const paras = [];
+  const textOf = el => (el?.textContent || "").replace(/\s+/g, " ").trim();
+  const centered = el => { try { return getComputedStyle(el).textAlign === "center"; } catch { return false; } };
+  const pushText = (text, opts={}) => { if (text) paras.push({ runs:[{ text, bold:!!opts.bold, italic:!!opts.italic }], ...opts }); };
+
+  function walk(node){
+    Array.from(node.children || []).forEach(el => {
+      if (el.classList?.contains("no-print") || el.classList?.contains("isug")) return;
+      const tag = el.tagName;
+      if (el.classList?.contains("r-header")) { walk(el); return; }
+      if (el.classList?.contains("r-name")) { pushText(textOf(el), { style:"Name", bold:true, align:centered(el)?"center":"left" }); return; }
+      if (el.classList?.contains("r-title")) { pushText(textOf(el), { style:"Title", bold:true, align:centered(el)?"center":"left" }); return; }
+      if (el.classList?.contains("r-contact")) { pushText(textOf(el), { style:"Contact", align:centered(el)?"center":"left" }); return; }
+      if (el.classList?.contains("r-h2")) { pushText(textOf(el).toUpperCase(), { style:"Section", bold:true, keepNext:true }); return; }
+      if (el.classList?.contains("r-rowline")) {
+        const role = textOf(el.querySelector(".r-role"));
+        const sub = textOf(el.querySelector(".r-sub"));
+        const dates = textOf(el.querySelector(".r-dates"));
+        const runs = [];
+        if (role) runs.push({ text: role, bold:true });
+        if (sub) runs.push({ text: (role ? " — " : "") + sub });
+        if (dates) runs.push({ tab:true }, { text:dates });
+        if (runs.length) paras.push({ runs, style:"Role", rightTab:!!dates, keepNext:true });
+        return;
+      }
+      if (el.classList?.contains("r-skills")) {
+        const cat = el.querySelector(".r-cat");
+        if (cat) {
+          const label = textOf(cat);
+          const all = textOf(el);
+          const rest = all.slice(label.length).trim();
+          paras.push({ runs:[{text:label, bold:true}, ...(rest ? [{text:" " + rest}] : [])], style:"Body" });
+        } else pushText(textOf(el), { style:"Body" });
+        return;
+      }
+      if (el.classList?.contains("r-sum")) { pushText(textOf(el), { style:"Body" }); return; }
+      if (tag === "UL") {
+        Array.from(el.children || []).forEach(li => {
+          if (li.classList?.contains("no-print")) return;
+          const t = textOf(li); if (t) paras.push({ runs:[{text:"• " + t}], style:"Bullet" });
+        });
+        return;
+      }
+      if (el.classList?.contains("r-block")) { walk(el); return; }
+      if (tag === "P") { pushText(textOf(el), { style:"Body" }); return; }
+      walk(el);
+    });
+  }
+  walk(sheetEl);
+
+  const runXml = r => r.tab ? `<w:r><w:tab/></w:r>` : `<w:r>${r.bold||r.italic ? `<w:rPr>${r.bold?"<w:b/>":""}${r.italic?"<w:i/>":""}</w:rPr>` : ""}<w:t xml:space="preserve">${xmlEscape(r.text)}</w:t></w:r>`;
+  const paraXml = p => {
+    const align = p.align ? `<w:jc w:val="${p.align}"/>` : "";
+    const keep = p.keepNext ? `<w:keepNext/>` : "";
+    const tab = p.rightTab ? `<w:tabs><w:tab w:val="right" w:pos="9360"/></w:tabs>` : "";
+    return `<w:p><w:pPr><w:pStyle w:val="${xmlEscape(p.style || "Body")}"/>${align}${keep}${tab}</w:pPr>${p.runs.map(runXml).join("")}</w:p>`;
+  };
+  const bodyXml = paras.map(paraXml).join("");
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${bodyXml}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>
+<w:style w:type="paragraph" w:styleId="Body"><w:name w:val="Body"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="60"/></w:pPr></w:style>
+<w:style w:type="paragraph" w:styleId="Name"><w:name w:val="Name"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="20"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/><w:szCs w:val="36"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="30"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Contact"><w:name w:val="Contact"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="80"/></w:pPr><w:rPr><w:sz w:val="18"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Section"><w:name w:val="Section"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="120" w:after="40"/><w:pBdr><w:bottom w:val="single" w:sz="8" w:space="2" w:color="222222"/></w:pBdr></w:pPr><w:rPr><w:b/><w:sz w:val="21"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Role"><w:name w:val="Role"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="20"/></w:pPr></w:style>
+<w:style w:type="paragraph" w:styleId="Bullet"><w:name w:val="Bullet"/><w:basedOn w:val="Normal"/><w:pPr><w:ind w:left="300" w:hanging="180"/><w:spacing w:after="30"/></w:pPr></w:style>
+</w:styles>`;
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+  const docRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  return makeZipStore({
+    "[Content_Types].xml": contentTypes,
+    "_rels/.rels": rootRels,
+    "word/document.xml": documentXml,
+    "word/styles.xml": stylesXml,
+    "word/_rels/document.xml.rels": docRels,
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /*  PDF export — walks the rendered resume sheet and emits REAL TEXT   */
 /*  (selectable, not an image). No html2canvas, no print dialog.       */
 /*  Honors the live DOM, so manual edits + the chosen template's       */
@@ -1170,6 +1322,7 @@ function ResumeApp(){
   const [editing, setEditing] = useState(false);
   const [editedHTML, setEditedHTML] = useState(null);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [docxBusy, setDocxBusy] = useState(false);
 
   const [cover, setCover] = useState("");
   const [coverBusy, setCoverBusy] = useState(false);
@@ -1511,6 +1664,27 @@ function ResumeApp(){
       setPdfBusy(false);
     }
   };
+  const downloadDOCX = async () => {
+    if(!sheetRef.current) return;
+    setDocxBusy(true); setError("");
+    try {
+      const name = (result?.tailored?.name || "resume").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      const role = (jobTitle || result?.analysis?.jobTitle || "role").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      // Yield once so any contentEditable change is committed to the live DOM first.
+      await new Promise(r => requestAnimationFrame(r));
+      const blob = buildResumeDOCX(sheetRef.current);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `${name}-${role}-resume.docx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      setError("Couldn't build the DOCX (" + (e?.message || e) + ").");
+    } finally {
+      setDocxBusy(false);
+    }
+  };
+
   const toggleEdit = () => {
     if (sheetRef.current) setEditedHTML(sheetRef.current.innerHTML); // snapshot current content (structured or edited)
     setEditing(e => !e); setShowSug(false);
@@ -1727,7 +1901,8 @@ function ResumeApp(){
                         <button className="rb-btn rb-btn-ghost rb-btn-sm" onClick={() => adjustLength("expand")} disabled={busy || editing}><RefreshCw size={13} /> Fuller</button>
                         <button className="rb-btn rb-btn-ghost rb-btn-sm" onClick={() => adjustLength("condense")} disabled={busy || editing}><RefreshCw size={13} /> Tighter</button>
                         <button className="rb-btn rb-btn-ghost rb-btn-sm" onClick={downloadHTML}><FileDown size={13} /> HTML</button>
-                        <button className="rb-btn rb-btn-acc rb-btn-sm" onClick={downloadPDF} disabled={pdfBusy}>{pdfBusy ? <><Loader2 size={13} className="spin" /> Building…</> : <><Download size={13} /> Download PDF</>}</button>
+                        <button className="rb-btn rb-btn-ghost rb-btn-sm" onClick={downloadDOCX} disabled={docxBusy}>{docxBusy ? <><Loader2 size={13} className="spin" /> Building…</> : <><FileText size={13} /> Export DOCX</>}</button>
+                        <button className="rb-btn rb-btn-acc rb-btn-sm" onClick={downloadPDF} disabled={pdfBusy}>{pdfBusy ? <><Loader2 size={13} className="spin" /> Building…</> : <><Download size={13} /> Export PDF</>}</button>
                       </div>
                     </div>
 
@@ -1741,7 +1916,7 @@ function ResumeApp(){
                     {busy && <div className="rb-pageinfo no-print"><Loader2 size={13} className="spin" /> {stage}…</div>}
 
                     {editing && view === "recruiter" && (
-                      <div className="rb-banner no-print"><Pencil size={15} style={{ flex: "none", marginTop: 1 }} />Click anywhere in the resume to change or add text, then hit Download PDF. (Switching template, adjusting length, or regenerating clears manual edits.)</div>
+                      <div className="rb-banner no-print"><Pencil size={15} style={{ flex: "none", marginTop: 1 }} />Click anywhere in the resume to change or add text, then export as PDF or DOCX. (Switching template, adjusting length, or regenerating clears manual edits.)</div>
                     )}
 
                     {review.on && (
