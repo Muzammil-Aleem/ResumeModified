@@ -225,6 +225,85 @@ textarea.rb-ta:focus,input.rb-in:focus{outline:2px solid var(--green);outline-of
 .tpl-awesome ul{margin:2px 0 5px;padding-left:17px;}
 .tpl-awesome li{margin:1.6px 0;}
 
+/* ATS-first U.S. market templates */
+.tpl-engineering{font-family:Arial,Helvetica,sans-serif;font-size:11.95px;line-height:1.36;padding:32px 38px;}
+.tpl-engineering .r-header{text-align:center;margin-bottom:4px;}
+.tpl-engineering .r-name{font-size:23px;line-height:1.05;margin-bottom:2px;font-weight:700;}
+.tpl-engineering .r-title{font-size:11.8px;color:#111;font-weight:600;margin:0 0 3px;}
+.tpl-engineering .r-contact{font-size:10.5px;color:#111;margin:0;}
+.tpl-engineering .r-h2{font-size:11.2px;letter-spacing:.025em;text-transform:uppercase;border-bottom:1px solid #111;padding-bottom:2px;margin:10px 0 4px;}
+.tpl-engineering .r-role{font-size:11.9px;}
+.tpl-engineering .r-sub{font-size:11.35px;color:#222;}
+.tpl-engineering .r-dates{font-size:10.55px;color:#222;}
+.tpl-engineering .r-block{margin-bottom:5px;}
+.tpl-engineering ul{margin:2px 0 4px;padding-left:16px;}
+.tpl-engineering li{margin:1.3px 0;}
+
+.tpl-faang{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.4;padding:34px 40px;}
+.tpl-faang .r-header{text-align:left;border-bottom:1px solid #111;padding-bottom:6px;margin-bottom:5px;}
+.tpl-faang .r-name{font-size:25px;line-height:1.05;margin-bottom:2px;font-weight:700;}
+.tpl-faang .r-title{font-size:12px;color:#111;font-weight:600;margin:0 0 3px;}
+.tpl-faang .r-contact{font-size:10.6px;color:#222;margin:0;}
+.tpl-faang .r-h2{font-size:11.3px;letter-spacing:.055em;text-transform:uppercase;border-bottom:1px solid #111;padding-bottom:2px;margin:11px 0 5px;}
+.tpl-faang .r-role{font-size:12px;}
+.tpl-faang .r-sub{font-size:11.45px;color:#222;}
+.tpl-faang .r-dates{font-size:10.6px;color:#222;}
+.tpl-faang .r-block{margin-bottom:6px;}
+.tpl-faang ul{margin:2px 0 4px;padding-left:17px;}
+.tpl-faang li{margin:1.4px 0;}
+
+.tpl-stanford{font-family:"Times New Roman",Times,serif;font-size:12.3px;line-height:1.4;padding:38px 44px;}
+.tpl-stanford .r-header{text-align:left;margin-bottom:7px;}
+.tpl-stanford .r-name{font-size:24px;line-height:1.05;letter-spacing:.01em;margin-bottom:2px;font-weight:700;}
+.tpl-stanford .r-title{font-size:12.1px;color:#111;font-weight:700;margin:0 0 3px;}
+.tpl-stanford .r-contact{font-size:10.8px;color:#222;margin:0 0 4px;}
+.tpl-stanford .r-h2{font-size:11.4px;letter-spacing:.04em;text-transform:uppercase;border-top:1px solid #111;border-bottom:1px solid #111;padding:2px 0;margin:12px 0 5px;}
+.tpl-stanford .r-role{font-size:12.2px;}
+.tpl-stanford .r-sub{font-size:11.7px;color:#222;}
+.tpl-stanford .r-dates{font-size:10.9px;color:#222;}
+.tpl-stanford .r-block{margin-bottom:7px;}
+.tpl-stanford ul{margin:2px 0 5px;padding-left:17px;}
+.tpl-stanford li{margin:1.5px 0;}
+
+.tpl-princeton{font-family:Georgia,"Times New Roman",serif;font-size:12.15px;line-height:1.42;padding:38px 44px;}
+.tpl-princeton .r-header{text-align:center;margin-bottom:8px;}
+.tpl-princeton .r-name{font-size:23px;line-height:1.06;letter-spacing:.02em;margin-bottom:2px;font-weight:700;}
+.tpl-princeton .r-title{font-size:12px;color:#111;font-weight:600;margin:0 0 3px;}
+.tpl-princeton .r-contact{font-size:10.7px;color:#222;margin:0;}
+.tpl-princeton .r-h2{font-size:11.2px;letter-spacing:.065em;text-transform:uppercase;border-bottom:1px solid #111;padding-bottom:2px;margin:12px 0 5px;}
+.tpl-princeton .r-role{font-size:12.05px;}
+.tpl-princeton .r-sub{font-size:11.55px;color:#222;}
+.tpl-princeton .r-dates{font-size:10.75px;color:#222;}
+.tpl-princeton .r-block{margin-bottom:7px;}
+.tpl-princeton ul{margin:2px 0 5px;padding-left:17px;}
+.tpl-princeton li{margin:1.5px 0;}
+
+.tpl-berkeley{font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px;line-height:1.4;padding:35px 41px;}
+.tpl-berkeley .r-header{text-align:left;margin-bottom:7px;}
+.tpl-berkeley .r-name{font-size:24px;line-height:1.05;margin-bottom:2px;font-weight:700;}
+.tpl-berkeley .r-title{font-size:12px;color:#222;font-weight:600;margin:0 0 3px;}
+.tpl-berkeley .r-contact{font-size:10.6px;color:#333;margin:0;}
+.tpl-berkeley .r-h2{font-size:11.25px;letter-spacing:.07em;text-transform:uppercase;border-bottom:2px solid #111;padding-bottom:2px;margin:11px 0 5px;}
+.tpl-berkeley .r-role{font-size:12px;}
+.tpl-berkeley .r-sub{font-size:11.45px;color:#333;}
+.tpl-berkeley .r-dates{font-size:10.65px;color:#333;}
+.tpl-berkeley .r-block{margin-bottom:6px;}
+.tpl-berkeley ul{margin:2px 0 4px;padding-left:17px;}
+.tpl-berkeley li{margin:1.4px 0;}
+
+.tpl-cmu{font-family:Arial,Helvetica,sans-serif;font-size:11.9px;line-height:1.37;padding:33px 39px;}
+.tpl-cmu .r-header{text-align:center;margin-bottom:5px;}
+.tpl-cmu .r-name{font-size:23px;line-height:1.05;margin-bottom:2px;font-weight:700;}
+.tpl-cmu .r-title{font-size:11.8px;color:#111;font-weight:600;margin:0 0 3px;}
+.tpl-cmu .r-contact{font-size:10.45px;color:#222;margin:0;}
+.tpl-cmu .r-h2{font-size:11.1px;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid #111;padding-bottom:2px;margin:10px 0 4px;}
+.tpl-cmu .r-role{font-size:11.85px;}
+.tpl-cmu .r-sub{font-size:11.3px;color:#222;}
+.tpl-cmu .r-dates{font-size:10.45px;color:#222;}
+.tpl-cmu .r-block{margin-bottom:5px;}
+.tpl-cmu ul{margin:2px 0 4px;padding-left:16px;}
+.tpl-cmu li{margin:1.25px 0;}
+
 
 /* ATS view */
 .ats-view{font-family:var(--mono);font-size:12px;line-height:1.75;color:var(--ink-soft);white-space:pre-wrap;background:var(--card-2);border:1px solid var(--line-2);border-radius:11px;padding:20px 20px;max-width:780px;margin:0 auto;}
@@ -338,6 +417,12 @@ const TEMPLATES = [
   { id: "harvard",   name: "Harvard",       cls: "tpl-harvard",   desc: "Career-services style: conservative, highly readable, and recruiter-friendly.", mini: ["serif", "center"] },
   { id: "deedy",     name: "Deedy OpenFonts", cls: "tpl-deedy",  desc: "Well-known engineering resume style with compact technical typography.", mini: [] },
   { id: "awesome",   name: "Awesome-CV",    cls: "tpl-awesome",   desc: "Popular developer CV styling with restrained accent and clean technical hierarchy.", mini: ["center", "acc"] },
+  { id: "engineering", name: "EngineeringResumes", cls: "tpl-engineering", desc: "ATS-first open-source engineering style favored for US software, data, cloud, and AI applications.", mini: ["center"] },
+  { id: "faang",     name: "FAANG Tech",    cls: "tpl-faang",     desc: "Dense one-column US tech format optimized for recruiter scanning and remote engineering roles.", mini: [] },
+  { id: "stanford",  name: "Stanford Career", cls: "tpl-stanford", desc: "University career-center inspired format with traditional typography and strong section hierarchy.", mini: ["serif"] },
+  { id: "princeton", name: "Princeton Career", cls: "tpl-princeton", desc: "Conservative career-services layout for professional, technical, and senior individual-contributor roles.", mini: ["serif", "center"] },
+  { id: "berkeley",  name: "Berkeley Engineering", cls: "tpl-berkeley", desc: "Clean engineering-focused layout with strong readability for US tech and data roles.", mini: [] },
+  { id: "cmu",       name: "CMU Tech",      cls: "tpl-cmu",       desc: "Compact technical resume style tuned for software, data engineering, AI/ML, and platform roles.", mini: ["center"] },
   { id: "classic",   name: "Classic",       cls: "tpl-classic",   desc: "Serif, conservative. Safe for finance, law, academia.", mini: ["serif"] },
   { id: "modern",    name: "Modern",        cls: "tpl-modern",    desc: "Clean sans with a quiet accent. Great for tech & product.", mini: ["acc"] },
   { id: "compact",   name: "Compact",       cls: "tpl-compact",   desc: "Tighter spacing to fit dense experience on two pages.", mini: [] },
@@ -1587,7 +1672,7 @@ function ResumeApp(){
                     </button>
                   ))}
                 </div>
-                <p className="rb-hint">All 12 export as clean text. Jake and Harvard are the safest picks for ATS-heavy U.S. Data Engineering and AI/ML applications; Deedy and Awesome-CV are more visual.</p>
+                <p className="rb-hint">All 18 export as clean text. Jake, EngineeringResumes, FAANG Tech, Harvard, Berkeley Engineering, and CMU Tech are the safest picks for ATS-heavy U.S. remote Data Engineering, SWE, Cloud, and AI/ML applications; Deedy and Awesome-CV are more visual.</p>
               </div>
             </div>
 
